@@ -70,7 +70,7 @@ class Board:
                 Piece(PieceType.ROOK, Colour.WHITE),
         ]
 
-        rank1 = [None] * 8 # [Piece(PieceType.PAWN, Colour.WHITE)] * 8
+        rank1 = [Piece(PieceType.PAWN, Colour.WHITE)] * 8
 
         rank6 = [Piece(PieceType.PAWN, Colour.BLACK)] * 8
 
@@ -216,7 +216,39 @@ class Board:
             valid_moves.extend(self._check_next_space(piece, pos, direction))
 
         return valid_moves
+    
+    def king_moves(self, pos: Pos) -> list[Pos]:
+        """
+        TODO: Castling
+        Does not check for check!
+        """
+        piece = self.get_piece(pos)
 
+        if piece is None:
+            return []
+        if piece.piece_type != PieceType.KING:
+            return []
+        
+        directions = (
+            (1, 0), (-1, 0),
+            (0, 1), (0, -1),
+            (1, 1), (1, -1),
+            (-1, 1), (-1, -1)
+        )
+
+        valid_moves = []
+        for direction in directions:
+            new_pos = pos + direction
+            if not new_pos.is_valid():
+                continue
+
+            new_piece = self.get_piece(new_pos)
+            if new_piece is None:
+                valid_moves.append(new_pos)
+            elif new_piece.colour != piece.colour:
+                valid_moves.append(new_pos)
+
+        return valid_moves
 
 
              
@@ -230,4 +262,4 @@ class Game:
 
 b = Board()
 print(b)
-print(b.rook_moves(Pos(0, 0)))
+print(b.king_moves(Pos(0, 4)))
