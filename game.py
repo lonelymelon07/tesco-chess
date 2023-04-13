@@ -42,23 +42,32 @@ class Colour(Enum):
     WHITE = 0
     BLACK = 1
 
+    def __str__(self):
+        return "W" if self == Colour.WHITE else "B"
+
 @dataclass
 class Piece:
     piece_type: PieceType
     colour: Colour
     _num_moves: int = 0
+    _has_just_moved: bool = False
     _is_enpassantable: bool = False
+    _can_castle: bool = False
 
     def __str__(self):
         if self.colour == Colour.WHITE:
             return chr(0x2654 + self.piece_type.value)
         else:
             return chr(0x265a + self.piece_type.value)
-
+    
+    @property
+    def has_moved(self) -> bool:
+        return self._num_moves > 0
 
 class Board:
     """Wrapper over a list of lists to ensure they remain a fixed length"""
     def __init__(self, size=8):
+        # I couldn't be arsed to do this in code so manually it is
         rank0 = [
                 Piece(PieceType.ROOK, Colour.WHITE), 
                 Piece(PieceType.KNIGHT, Colour.WHITE), 
@@ -91,9 +100,9 @@ class Board:
                 self._data.append(rank0)
             elif rank == 1:
                 self._data.append(rank1)
-            elif rank == 6:
+            elif rank == 2:
                 self._data.append(rank6)
-            elif rank == 7:
+            elif rank == 3:
                 self._data.append(rank7)
             else:
                 self._data.append([None] * 8)
@@ -105,15 +114,29 @@ class Board:
         return repr(self._data)
     
     def __str__(self) -> str:
-        out = "----"*8 + "-\n"
-        for rank in self._data:
+        out = ""
+        out += "+----"*8 + "+\n"
+        for rank in reversed(self._data):
             out += "| "
             for piece in rank:
-                out += str(piece or " ") + " | "
-            out += "\n" + "----"*8 + "-\n"
+                out += f"{piece.colour}{piece} | " if piece is not None else "   | "
+            out += "\n" + "+----"*8 + "+\n"
 
         return out
     
+    def _dbg_print_positions(self):
+        print([[(i, j) for j in range(self.size)] for i in range(self.size)])
+    
+    def _is_capturable(self, pos: Pos, captor: Piece) -> bool:
+        if not pos.is_valid():
+            return False
+        
+        piece = self.get_piece(pos)
+        if piece is None or piece.colour == captor.colour:
+            return False
+        
+        return True
+
     def get_piece(self, pos: Pos) -> Piece | None:
         return self._data[pos.rank][pos.file]
     
@@ -148,6 +171,7 @@ class Board:
     
     def _check_next_space(self, original_piece: Piece, pos: Pos, direction: tuple[int, int]) -> list[Pos]:
         """Recursive function which looks at spaces in turn until the piece can move no further"""
+        # somehow this worked first time!
         next_pos = pos + direction
         if not next_pos.is_valid():
             return []
@@ -250,16 +274,47 @@ class Board:
 
         return valid_moves
 
+    def pawn_moves(self, pos: Pos) -> list[Pos]:
+        """
+        TODO: en passant
+        """
+        piece = self.get_piece(pos)
 
-             
+        if piece is None:
+            return []
+        if piece.piece_type != PieceType.PAWN:
+            return []
         
+        if piece.colour == Colour.WHITE:
+            dir_mult = 1
+        else:
+            dir_mult = -1
 
+        valid_moves = []
+
+        # first check space in front
+        new_pos = pos + (1 * dir_mult, 0)
+        if new_pos.is_valid() and self.get_piece(new_pos) is None:
+            valid_moves.append(new_pos)
+
+        # if the first move is not valid then jumping two ahead isn't either!
+        if valid_moves and not piece.has_moved:
+            new_pos = pos + (2 * dir_mult, 0)
+            if new_pos.is_valid() and self.get_piece(new_pos) is None:
+                valid_moves.append(new_pos)
+
+        # now for sidewaysing!
+        for direction in ((1 * dir_mult, 1), (1 * dir_mult, -1)):
+            new_pos = pos + direction
+            if not new_pos.is_valid() or (victim := self.get_piece(new_pos)) is None:
+                continue
+            if victim.colour == piece.colour:
+                continue
+            valid_moves.append(new_pos)
+
+        return valid_moves
 
 
 
 class Game:
     pass
-
-b = Board()
-print(b)
-print(b.king_moves(Pos(0, 4)))
