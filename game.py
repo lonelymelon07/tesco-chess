@@ -100,9 +100,9 @@ class Board:
                 self._data.append(rank0)
             elif rank == 1:
                 self._data.append(rank1)
-            elif rank == 2:
+            elif rank == 6:
                 self._data.append(rank6)
-            elif rank == 3:
+            elif rank == 7:
                 self._data.append(rank7)
             else:
                 self._data.append([None] * 8)
