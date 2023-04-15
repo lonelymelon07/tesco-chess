@@ -139,7 +139,14 @@ class Board:
 
     def get_piece(self, pos: Pos) -> Piece | None:
         return self._data[pos.rank][pos.file]
+     
+    def _force_move(self, origin: Pos, destination: Pos):
+        self._set_piece(destination, self.get_piece(origin))
+        self._set_piece(origin, None)
     
+    def _set_piece(self, pos: Pos, piece: Piece | None):
+        self._data[pos.rank][pos.file] = piece
+
     def knight_moves(self, pos: Pos) -> list[Pos]:
         piece = self.get_piece(pos)
 
@@ -313,8 +320,38 @@ class Board:
             valid_moves.append(new_pos)
 
         return valid_moves
+    
+    def move(self, origin: Pos, destination: Pos) -> bool:
+        piece = self.get_piece(origin)
+        if piece is None:
+            return False
+        
+        match self.get_piece(origin).piece_type:
+            case PieceType.KING:
+                valid_moves = self.king_moves(origin)
+            case PieceType.QUEEN:
+                valid_moves = self.queen_moves(origin)
+            case PieceType.ROOK:
+                valid_moves = self.rook_moves(origin)
+            case PieceType.BISHOP:
+                valid_moves = self.bishop_moves(origin)
+            case PieceType.KNIGHT:
+                valid_moves = self.knight_moves(origin)
+            case PieceType.PAWN:
+                valid_moves = self.pawn_moves(origin)
+        if destination not in valid_moves:
+            return False
+        
+        self._force_move(origin, destination)
+        return True
+        
 
 
 
 class Game:
     pass
+
+b = Board()
+print(b)
+b.move(Pos(1, 4), Pos(3, 4))
+print(b)
