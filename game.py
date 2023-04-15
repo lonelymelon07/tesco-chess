@@ -26,9 +26,6 @@ class Pos:
 
     def is_valid(self):
         return 0 <= self.rank < BOARD_SIZE and 0 <= self.file < BOARD_SIZE 
-    
-
-
 
 class PieceType(Enum):
     KING = 0
@@ -114,8 +111,7 @@ class Board:
         return repr(self._data)
     
     def __str__(self) -> str:
-        out = ""
-        out += "+----"*8 + "+\n"
+        out = "+----"*8 + "+\n"
         for rank in reversed(self._data):
             out += "| "
             for piece in rank:
@@ -351,7 +347,15 @@ class Board:
 class Game:
     pass
 
-b = Board()
-print(b)
-b.move(Pos(1, 4), Pos(3, 4))
-print(b)
+### TEMPORARY!!!
+board = Board()
+
+while True:
+    print(board)
+
+    origin = [int(s.strip()) for s in input("Piece to move: ").split(',')]
+    origin = Pos(origin[0], origin[1])
+    destination = [int(s.strip()) for s in input("destination: ").split(',')]
+    destination = Pos(destination[0], destination[1])
+
+    print(board.move(origin, destination))
